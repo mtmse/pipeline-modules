@@ -2,10 +2,10 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="2.0"
                 xmlns:xs="http://www.w3.org/2001/XMLSchema"
                 xmlns:d="http://www.daisy.org/ns/pipeline/data"
+                xmlns:c="http://www.w3.org/ns/xproc-step"
+                xmlns:f="functions"
                 exclude-result-prefixes="xs">
 
-  <xsl:param name="tmp-word-tag"/>
-  <xsl:param name="tmp-sentence-tag"/>
   <xsl:param name="can-contain-words"/>
   <xsl:param name="special-sentences" select="''"/>
   <xsl:param name="output-ns"/>
@@ -21,6 +21,23 @@
   <xsl:param name="output-word-tag"/>
   <xsl:param name="word-attr" select="''"/>
   <xsl:param name="word-attr-val" select="''"/>
+
+  <xsl:variable name="options" as="element(c:param-set)" select="collection()[2]/*"/>
+
+  <!--
+      This relies on p:in-scope-names adding the namespaces that travel with an option
+      (https://www.w3.org/TR/xproc/#opt-param-bindings) to the c:param element. This is true for our
+      version of XMLCalabash.
+  -->
+  <xsl:variable name="tmp-word-tag" as="xs:QName"
+		select="f:param-value-as-QName($options/c:param[@name='tmp-word-tag'])"/>
+  <xsl:variable name="tmp-sentence-tag" as="xs:QName"
+		select="f:param-value-as-QName($options/c:param[@name='tmp-sentence-tag'])"/>
+
+  <xsl:function name="f:param-value-as-QName" as="xs:QName">
+    <xsl:param name="param" as="element(c:param)"/>
+    <xsl:sequence select="resolve-QName($param/@value,$param)"/>
+  </xsl:function>
 
   <xsl:key name="sentence-for-element" match="d:sentence" use="@element"/>
 
@@ -52,7 +69,9 @@
     <xsl:apply-templates select="*" mode="#current"/>
   </xsl:template>
 
-  <xsl:template match="*[local-name() = $tmp-sentence-tag]" mode="sentence-ids" priority="2">
+  <xsl:template match="*[local-name()=local-name-from-QName($tmp-sentence-tag)
+		         and namespace-uri()=namespace-uri-from-QName($tmp-sentence-tag)]"
+		mode="sentence-ids" priority="2">
     <d:sentence element="{generate-id(.)}">
       <xsl:copy-of select="@xml:lang"/> <!-- doesn't always exist -->
     </d:sentence>
@@ -122,7 +141,10 @@
   	  </xsl:apply-templates>
   	</xsl:element>
       </xsl:when>
-      <xsl:when test="local-name() = $tmp-word-tag or local-name() = $tmp-sentence-tag">
+      <xsl:when test="(local-name()=local-name-from-QName($tmp-word-tag)
+		       and namespace-uri()=namespace-uri-from-QName($tmp-word-tag))
+		      or (local-name()=local-name-from-QName($tmp-sentence-tag)
+		          and namespace-uri()=namespace-uri-from-QName($tmp-sentence-tag))">
   	<!-- The node is ignored. This shouldn't happen though, because the -->
   	<!-- sentences have been properly distributed by the previous -->
   	<!-- script. -->
@@ -141,7 +163,9 @@
   <!-- INSIDE THE SENTENCES (ONCE THEY HAVE BEEN ADDED)        -->
   <!--======================================================== -->
 
-  <xsl:template match="*[local-name() = $tmp-sentence-tag]" mode="inside-sentence" priority="2">
+  <xsl:template match="*[local-name()=local-name-from-QName($tmp-sentence-tag)
+		         and namespace-uri()=namespace-uri-from-QName($tmp-sentence-tag)]"
+		mode="inside-sentence" priority="2">
     <xsl:param name="parent-name"/>
     <!-- Ignore the node: since we are already inside a sentence,
          it means that a parent node has been recycled to contain the
@@ -152,7 +176,9 @@
   </xsl:template>
 
   <xsl:variable name="ok-parent-list" select="concat(',', $can-contain-words, ',', $output-sentence-tag, ',')" />
-  <xsl:template match="*[local-name() = $tmp-word-tag]" mode="inside-sentence" priority="2">
+  <xsl:template match="*[local-name()=local-name-from-QName($tmp-word-tag)
+		         and namespace-uri()=namespace-uri-from-QName($tmp-word-tag)]"
+		mode="inside-sentence" priority="2">
     <xsl:param name="parent-name"/>
     <xsl:choose>
       <xsl:when test="contains($ok-parent-list, concat(',', $parent-name, ','))">
@@ -203,7 +229,9 @@
     </xsl:copy>
   </xsl:template>
 
-  <xsl:template match="*[local-name() = $tmp-word-tag]" mode="inside-word" priority="2">
+  <xsl:template match="*[local-name()=local-name-from-QName($tmp-word-tag)
+		         and namespace-uri()=namespace-uri-from-QName($tmp-word-tag)]"
+		mode="inside-word" priority="2">
     <!-- the temporary word is ignored.-->
     <xsl:apply-templates select="node()" mode="inside-word"/>
   </xsl:template>
@@ -234,8 +262,11 @@
 
   <!-- UTILS -->
   <xsl:template name="copy-namespaces">
-    <xsl:for-each select="namespace::* except namespace::tmp">
-      <xsl:namespace name="{name(.)}" select="string(.)"/>
+    <xsl:variable name="tmp-ns" as="xs:string*"
+		  select="distinct-values(
+			    for $tag in ($tmp-word-tag,$tmp-sentence-tag) return namespace-uri-from-QName($tag))"/>
+    <xsl:for-each select="namespace::*[not(.=$tmp-ns)]">
+      <xsl:sequence select="."/>
     </xsl:for-each>
   </xsl:template>
 
