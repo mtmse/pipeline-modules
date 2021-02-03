@@ -60,6 +60,8 @@
 		</p:documentation>
 	</p:option>
 
+	<p:option name="log-conflicts" required="false" select="'true'"/>
+
 	<p:import href="http://www.daisy.org/pipeline/modules/common-utils/library.xpl">
 		<p:documentation>
 			px:assert
@@ -106,11 +108,12 @@
 				<p:pipe step="package-doc" port="result"/>
 			</p:input>
 			<p:with-option name="reserved-prefixes" select="$reserved-prefixes"/>
+			<p:with-option name="log-conflicts" select="$log-conflicts"/>
 		</pxi:merge-metadata>
-		<!--
-		    Add OPF 2 metadata. Note that all OPF 2 metadata that was already present has been
-		    removed by the previous step.
-		-->
+		<p:documentation>For compatibility with OPF 2, add a second meta element with "name" and
+		"content" attributes for every meta element.</p:documentation>
+		<!-- Note that all OPF 2 metadata that was already present has been
+		     removed by the previous step. -->
 		<p:choose>
 			<p:when test="$compatibility-mode='true'">
 				<pxi:opf3-to-opf2-metadata compatibility-mode="true"/>
