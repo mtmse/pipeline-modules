@@ -508,6 +508,7 @@
 			<x:call>
 				<x:option name="tts" select="false()"/>
 				<x:option name="sentence-detection" select="true()"/>
+				<x:option name="sentence-class" select="'sentence'"/>
 			</x:call>
 			<x:context label="epub.out.fileset port">
 				<x:document type="port" port="epub.out.fileset"/>
@@ -604,10 +605,10 @@
 						</head>
 						<body id="chap_1" epub:type="bodymatter chapter">
 							<h1 id="h_1">
-								<span id="st3-1">Chapter <span ssml:ph="wʌn">I</span></span>
+								<span id="st3-1" class="sentence">Chapter <span ssml:ph="wʌn">I</span></span>
 							</h1>
 							<p>
-								<span id="st3-2">
+								<span id="st3-2" class="sentence">
 									This paragraph contains
 									<span epub:type="pagebreak" title="5" id="page_5" class="page-normal"
 									      style="visibility: hidden">5</span>
@@ -616,11 +617,11 @@
 							</p>
 							<figcaption id="caption_1">
 								<strong>
-									<span id="st3-3">
+									<span id="st3-3" class="sentence">
 										Illustration 1 A.
 									</span>
 								</strong>
-								<span id="st3-4">
+								<span id="st3-4" class="sentence">
 									This is an illustration.
 								</span>
 							</figcaption>
