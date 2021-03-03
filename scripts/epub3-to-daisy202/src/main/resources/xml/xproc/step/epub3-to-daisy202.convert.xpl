@@ -288,7 +288,7 @@
                     <p:input port="source">
                         <p:pipe step="smil-without-system-required" port="result"/>
                         <p:pipe step="convert-html" port="page-list"/>
-                        <p:pipe step="convert-html" port="in-memory"/>
+                        <p:pipe step="label-pagebreaks-from-nav" port="result.in-memory"/>
                     </p:input>
                     <p:input port="stylesheet">
                         <p:document href="../../xslt/make-skippables.xsl"/>
