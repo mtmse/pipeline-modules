@@ -13,6 +13,8 @@ import java.io.Reader;
 import java.io.StringWriter;
 import java.io.Writer;
 import static java.nio.charset.StandardCharsets.UTF_8;
+
+import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -35,6 +37,7 @@ import org.daisy.pipeline.tts.TTSService.SynthesisException;
 import org.daisy.pipeline.tts.Voice;
 import org.daisy.pipeline.tts.VoiceInfo.Gender;
 
+import org.daisy.pipeline.tts.cereproc.impl.util.CereprocTTSUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -132,6 +135,8 @@ public class CereProcEngine extends MarklessTTSEngine {
 	                                          AudioBufferAllocator bufferAllocator,
 	                                          boolean retry)
 			throws SynthesisException, InterruptedException, MemoryException {
+		CereprocTTSUtil ttsUtil = new CereprocTTSUtil(voice.getLocale());
+
 		Collection<AudioBuffer> result = new ArrayList<>();
 		StringWriter out = new StringWriter();
 		StringWriter err = new StringWriter();
@@ -148,9 +153,16 @@ public class CereProcEngine extends MarklessTTSEngine {
 			cmd[cmd.length - 3] = "-V";
 			cmd[cmd.length - 2] = voice.name;
 			cmd[cmd.length - 1] = txtFile.getAbsolutePath();
+			String filteredSentence = sentence;
 			try (OutputStream os = new FileOutputStream(txtFile)) {
 				Writer w = new OutputStreamWriter(os, UTF_8);
-				w.write(sentence.replace('\n', ' '));
+
+				logger.debug("TTSUTIL raw: " + sentence);
+				logger.debug("TTSUTIL filtered: " + filteredSentence);
+
+				filteredSentence = ttsUtil.applyCharacterSubstitution(filteredSentence);
+				filteredSentence = ttsUtil.applyRegex(filteredSentence);
+				w.write(filteredSentence.replace('\n', ' '));
 				w.write("\n");
 				try {
 					w.flush();
