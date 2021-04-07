@@ -136,7 +136,6 @@ public class CereProcEngine extends MarklessTTSEngine {
 	                                          AudioBufferAllocator bufferAllocator,
 	                                          boolean retry)
 			throws SynthesisException, InterruptedException, MemoryException {
-		CereprocTTSUtil ttsUtil = new CereprocTTSUtil(voice.getLocale());
 
 		Collection<AudioBuffer> result = new ArrayList<>();
 		StringWriter out = new StringWriter();
@@ -159,6 +158,9 @@ public class CereProcEngine extends MarklessTTSEngine {
 				Writer w = new OutputStreamWriter(os, UTF_8);
 			 	w.write(filteredSentence.replace('\n', ' '));
 				w.write("\n");
+				logger.warn("TEXTALK (SENTENCE): " + sentence);
+				logger.warn("TEXTALK (FILTERED): " + filteredSentence);
+
 				try {
 					w.flush();
 				} catch (IOException e) {
