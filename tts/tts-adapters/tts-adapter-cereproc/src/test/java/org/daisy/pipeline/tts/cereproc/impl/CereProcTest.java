@@ -1,12 +1,6 @@
 package org.daisy.pipeline.tts.cereproc.impl;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.stream.Collectors;
-
-import javax.inject.Inject;
-
+import com.google.common.collect.ImmutableSet;
 import org.daisy.pipeline.audio.AudioBuffer;
 import org.daisy.pipeline.junit.AbstractTest;
 import org.daisy.pipeline.tts.StraightBufferAllocator;
@@ -14,11 +8,15 @@ import org.daisy.pipeline.tts.TTSEngine;
 import org.daisy.pipeline.tts.TTSRegistry.TTSResource;
 import org.daisy.pipeline.tts.TTSService;
 import org.daisy.pipeline.tts.Voice;
-
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.google.common.collect.ImmutableSet;
+import javax.inject.Inject;
+import java.io.File;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class CereProcTest extends AbstractTest {
 
@@ -34,6 +32,13 @@ public class CereProcTest extends AbstractTest {
 
 	@Test
 	public void testAvailableVoices() throws Throwable {
+		CereProcService s = new CereProcService() {
+			@Override
+			protected CereProcEngine newEngine(String server, File client, int priority, Map<String, String> params) throws Throwable {
+				return null;
+			}
+		};
+
 		TTSEngine engine = ttsService.newEngine(params);
 		Collection<Voice> voices = engine.getAvailableVoices();
 		Assert.assertEquals(2, voices.size());
@@ -62,4 +67,5 @@ public class CereProcTest extends AbstractTest {
 			engine.releaseThreadResources(resource);
 		}
 	}
+
 }

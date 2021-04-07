@@ -1,8 +1,6 @@
 package org.daisy.pipeline.tts.cereproc.impl.util;
 
-import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Locale;
 import java.util.Optional;
@@ -21,51 +19,40 @@ public class CereprocTTSUtil {
 
     private void initRegexRules() {
         URL url;
-        File t;
 
-        String lang  = getCurrentLangauge();
-
-        if (lang == "sv") {
-            String swedish_cereproc_rulesets = "src/main/java/regex/cereproc_sv.xml";
-            t = new File(swedish_cereproc_rulesets);
-        } else if (lang == "en") {
-            String english_cereproc_rulesets = "src/main/java/regex/cereproc_en.xml";
-            t = new File(english_cereproc_rulesets);
+        String lang  = getCurrentLanguage();
+        if (lang.equals("sv")) {
+            url = CereprocTTSUtil.class.getResource("/regex/cereproc_sv.xml");
+        } else if (lang.equals("en")) {
+            url = CereprocTTSUtil.class.getResource("/regex/cereproc_en.xml");
         } else {
             return;
-        }
-
-        try {
-            url = t.toURI().toURL();
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-            throw new RuntimeException(e);
         }
 
         this.regexReplace = new RegexReplace(url);
     }
 
     private void initCharSubstitutionRules() {
-        this.charReplacer =  charReplacer = new UCharReplacer();
-        File commonSubstRulesFile = new File("src/main/java/charsubst/character-translation-table.xml");
+        this.charReplacer = new UCharReplacer();
+        URL commonSubstRulesFileUrl = CereprocTTSUtil.class.getResource("/charsubst/character-translation-table.xml");
         try {
-            this.charReplacer.addSubstitutionTable(commonSubstRulesFile.toURI().toURL());
+            this.charReplacer.addSubstitutionTable(commonSubstRulesFileUrl);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        String lang  = getCurrentLangauge();
+        String lang  = getCurrentLanguage();
 
-        File languageSubstRulesFile;
-        if (lang == "sv") {
-            languageSubstRulesFile = new File("src/main/java/charsubst/character-translation-table_sv.xml");
-        } else if (lang == "en") {
-            languageSubstRulesFile = new File("src/main/java/charsubst/character-translation-table_en.xml");
+        URL languageSubstRulesFileUrl;
+        if (lang.equals("sv")) {
+            languageSubstRulesFileUrl = CereprocTTSUtil.class.getResource("/charsubst/character-translation-table_sv.xml");
+        } else if (lang.equals("en")) {
+            languageSubstRulesFileUrl = CereprocTTSUtil.class.getResource("/charsubst/character-translation-table_en.xml");
         } else {
             return;
         }
 
         try {
-            this.charReplacer.addSubstitutionTable(languageSubstRulesFile.toURI().toURL());
+            this.charReplacer.addSubstitutionTable(languageSubstRulesFileUrl);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -79,12 +66,17 @@ public class CereprocTTSUtil {
         return this.charReplacer.replace(text).toString();
     }
 
-    private String getCurrentLangauge() {
+    public String applyAll(String text) {
+        String tmp;
+        tmp = this.applyRegex(text);
+        return this.applyCharacterSubstitution(tmp);
+    }
 
-        if (this.locale.isEmpty()){
-            return "";
-        } else {
+    private String getCurrentLanguage() {
+        if (this.locale.isPresent()){
             return this.locale.get().getLanguage();
+        } else {
+            return "";
         }
     }
 }
