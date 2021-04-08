@@ -16,7 +16,7 @@ package org.daisy.pipeline.tts.cereproc.impl.util;/*
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-import com.ibm.icu.text.Normalizer;
+import com.ibm.icu.text.Normalizer2;
 import com.ibm.icu.text.UCharacterIterator;
 
 import java.io.IOException;
@@ -58,7 +58,7 @@ import java.util.*;
  * <p>Note - there is a significant difference between a unicode codepoint (32 bit int)
  * and a UTF16 codeunit (=char) - a codepoint consists of one or two codeunits.</p>  
  * <p>To make sure an int represents a codepoint and not a codeunit, use for example
- * <code>com.ibm.icu.text.Normalizer</code> to NFC compose, followed by 
+ * <code>com.ibm.icu.text.Normalizer2</code> With Nfc mode.
  * <code>com.ibm.icu.text.UCharacterIterator</code> to retrieve possibly non-BMP codepoints 
  * from a string.</p>
  *  
@@ -73,15 +73,17 @@ import java.util.*;
  */
 
 public class UCharReplacer  {
-	private ArrayList<Map<Integer,String>> mSubstitutionTables = null; 					//ArrayList<HashMap:<int codepoint>,<replaceString>>: all loaded translationtables
+	private ArrayList<Map<Integer,String>> mSubstitutionTables; 					//ArrayList<HashMap:<int codepoint>,<replaceString>>: all loaded translationtables
 	private Map<Integer,String> mSubstitutionTable = null;						//represents the currently selected translationTable
 	private Iterator<Map<Integer,String>> mSubstitutionTablesIterator = null;			//recycled tables map iterator
-
+	private Normalizer2 normalizer;
 	/**
 	 * Default constructor.
 	 */
 	public UCharReplacer() {
 		mSubstitutionTables = new ArrayList<Map<Integer,String>>();
+		this.normalizer = Normalizer2.getNFDInstance();
+
 	}
 
 	/**
@@ -113,7 +115,7 @@ public class UCharReplacer  {
 		StringBuilder sb = new StringBuilder(input.length());
 		
 		//normalize to eliminate any ambiguities vis-a-vis the user tables
-		Normalizer.normalize(input.toString(),Normalizer.NFC);
+		this.normalizer.normalize(input.toString());
 		
 		//iterate over each codepoint in the input string
 		UCharacterIterator uci = UCharacterIterator.getInstance(input.toString());							
